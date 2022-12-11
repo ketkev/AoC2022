@@ -6,58 +6,57 @@ using System.Threading.Tasks;
 using AoC2022.utils;
 using AoCHelper;
 
-namespace AoC2022.Days
+namespace AoC2022.Days;
+
+public sealed class Day06 : BaseDay
 {
-    public sealed class Day06 : BaseDay
+    private string _input;
+
+    public Day06()
     {
-        private string _input;
+        _input = File.ReadAllText(InputFilePath);
+    }
 
-        public Day06()
+    public override ValueTask<string> Solve_1()
+    {
+        var position = 4;
+
+        for (; position < _input.Length; position++)
         {
-            _input = File.ReadAllText(InputFilePath);
+            if (isUnique(_input.Substring(position - 4, 4)))
+                break;
         }
 
-        public override ValueTask<string> Solve_1()
-        {
-            var position = 4;
+        return new ValueTask<string>($"{position}");
+    }
 
-            for (; position < _input.Length; position++)
+    private bool isUnique(string input)
+    {
+        var seen = new List<char>();
+
+        foreach (var c in input)
+        {
+            if (seen.Contains(c))
             {
-                if (isUnique(_input.Substring(position - 4, 4)))
-                    break;
+                return false;
             }
 
-            return new ValueTask<string>($"{position}");
+            seen.Add(c);
         }
 
-        private bool isUnique(string input)
+        return true;
+    }
+
+    public override ValueTask<string> Solve_2()
+    {
+        var position = 14;
+
+        for (; position < _input.Length; position++)
         {
-            var seen = new List<char>();
-
-            foreach (var c in input)
-            {
-                if (seen.Contains(c))
-                {
-                    return false;
-                }
-
-                seen.Add(c);
-            }
-
-            return true;
+            if (isUnique(_input.Substring(position - 14, 14)))
+                break;
         }
 
-        public override ValueTask<string> Solve_2()
-        {
-            var position = 14;
-
-            for (; position < _input.Length; position++)
-            {
-                if (isUnique(_input.Substring(position - 14, 14)))
-                    break;
-            }
-
-            return new ValueTask<string>($"{position}");
-        }
+        return new ValueTask<string>($"{position}");
     }
 }

@@ -5,139 +5,138 @@ using System.Threading.Tasks;
 using AoC2022.utils;
 using AoCHelper;
 
-namespace AoC2022.Days
+namespace AoC2022.Days;
+
+internal enum Move
 {
-    internal enum Move
+    Rock,
+    Paper,
+    Scissor
+}
+
+struct Round
+{
+    public readonly Move Opponent;
+    public readonly Move Yours;
+
+    public Round(string opponent, String yours)
     {
-        Rock,
-        Paper,
-        Scissor
+        Opponent = opponent switch
+        {
+            "A" => Move.Rock,
+            "B" => Move.Paper,
+            "C" => Move.Scissor,
+            _ => throw new ArgumentOutOfRangeException()
+        };
+
+        Yours = yours switch
+        {
+            "X" => Move.Rock,
+            "Y" => Move.Paper,
+            "Z" => Move.Scissor,
+            _ => throw new ArgumentOutOfRangeException()
+        };
+    }
+}
+
+public sealed class Day02 : BaseDay
+{
+    private readonly List<Round> _rounds = new();
+
+    public Day02()
+    {
+        var input = File.ReadAllLines(InputFilePath);
+
+        foreach (var line in input)
+        {
+            var (opponent, yours, _) = line.Split(" ");
+            _rounds.Add(new Round(opponent, yours));
+        }
     }
 
-    struct Round
+    public override ValueTask<string> Solve_1()
     {
-        public readonly Move Opponent;
-        public readonly Move Yours;
+        var score = 0L;
 
-        public Round(string opponent, String yours)
+        foreach (var round in _rounds)
         {
-            Opponent = opponent switch
+            score += round.Yours switch
             {
-                "A" => Move.Rock,
-                "B" => Move.Paper,
-                "C" => Move.Scissor,
+                Move.Rock => 1,
+                Move.Paper => 2,
+                Move.Scissor => 3,
                 _ => throw new ArgumentOutOfRangeException()
             };
 
-            Yours = yours switch
+            if (round.Opponent == round.Yours)
             {
-                "X" => Move.Rock,
-                "Y" => Move.Paper,
-                "Z" => Move.Scissor,
-                _ => throw new ArgumentOutOfRangeException()
-            };
+                score += 3;
+                continue;
+            }
+
+            if ((round.Yours == Move.Rock && round.Opponent == Move.Scissor)
+                || (round.Yours == Move.Paper && round.Opponent == Move.Rock)
+                || (round.Yours == Move.Scissor && round.Opponent == Move.Paper))
+            {
+                score += 6;
+            }
         }
+
+        return new ValueTask<string>($"{score}");
     }
 
-    public sealed class Day02 : BaseDay
+    public override ValueTask<string> Solve_2()
     {
-        private readonly List<Round> _rounds = new();
-
-        public Day02()
-        {
-            var input = File.ReadAllLines(InputFilePath);
-
-            foreach (var line in input)
-            {
-                var (opponent, yours, _) = line.Split(" ");
-                _rounds.Add(new Round(opponent, yours));
-            }
-        }
-
-        public override ValueTask<string> Solve_1()
-        {
-            var score = 0L;
-
-            foreach (var round in _rounds)
-            {
-                score += round.Yours switch
-                {
-                    Move.Rock => 1,
-                    Move.Paper => 2,
-                    Move.Scissor => 3,
-                    _ => throw new ArgumentOutOfRangeException()
-                };
-
-                if (round.Opponent == round.Yours)
-                {
-                    score += 3;
-                    continue;
-                }
-
-                if ((round.Yours == Move.Rock && round.Opponent == Move.Scissor)
-                    || (round.Yours == Move.Paper && round.Opponent == Move.Rock)
-                    || (round.Yours == Move.Scissor && round.Opponent == Move.Paper))
-                {
-                    score += 6;
-                }
-            }
-
-            return new ValueTask<string>($"{score}");
-        }
-
-        public override ValueTask<string> Solve_2()
-        {
-            var score = 0L;
+        var score = 0L;
             
-            foreach (var round in _rounds)
-            {
-                Move move;
+        foreach (var round in _rounds)
+        {
+            Move move;
                 
-                switch (round.Yours)
-                {
-                    case Move.Rock:
-                        // Lose
+            switch (round.Yours)
+            {
+                case Move.Rock:
+                    // Lose
                         
-                        move = round.Opponent switch
-                        {
-                            Move.Rock => Move.Scissor,
-                            Move.Paper => Move.Rock,
-                            Move.Scissor => Move.Paper,
-                            _ => throw new ArgumentOutOfRangeException()
-                        };
-                        break;
-                    case Move.Paper:
-                        // Draw
-                        score += 3;
+                    move = round.Opponent switch
+                    {
+                        Move.Rock => Move.Scissor,
+                        Move.Paper => Move.Rock,
+                        Move.Scissor => Move.Paper,
+                        _ => throw new ArgumentOutOfRangeException()
+                    };
+                    break;
+                case Move.Paper:
+                    // Draw
+                    score += 3;
 
-                        move = round.Opponent;
-                        break;
-                    case Move.Scissor:
-                        // Win
-                        score += 6;
+                    move = round.Opponent;
+                    break;
+                case Move.Scissor:
+                    // Win
+                    score += 6;
 
-                        move = round.Opponent switch
-                        {
-                            Move.Rock => Move.Paper,
-                            Move.Paper => Move.Scissor,
-                            Move.Scissor => Move.Rock,
-                            _ => throw new ArgumentOutOfRangeException()
-                        };
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
-                
-                score += move switch
-                {
-                    Move.Rock => 1,
-                    Move.Paper => 2,
-                    Move.Scissor => 3,
-                    _ => throw new ArgumentOutOfRangeException()
-                };
+                    move = round.Opponent switch
+                    {
+                        Move.Rock => Move.Paper,
+                        Move.Paper => Move.Scissor,
+                        Move.Scissor => Move.Rock,
+                        _ => throw new ArgumentOutOfRangeException()
+                    };
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
-            
-            return new ValueTask<string>($"{score}");
+                
+            score += move switch
+            {
+                Move.Rock => 1,
+                Move.Paper => 2,
+                Move.Scissor => 3,
+                _ => throw new ArgumentOutOfRangeException()
+            };
         }
+            
+        return new ValueTask<string>($"{score}");
     }
 }
