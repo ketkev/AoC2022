@@ -9,19 +9,21 @@ namespace AoC2022.Days;
 
 class Monkey
 {
-    private LinkedList<BigInteger> _items;
+    public static long LCD = 0;
+    private LinkedList<long> _items;
     public long InspectionCount { get; private set; }
-    private Func<BigInteger, BigInteger> _operation;
-    private Predicate<BigInteger> _test;
+    private Func<long, long> _operation;
+    public readonly int Test;
     public int ThrowToMonkeyWhenTrue { get; }
     public int ThrowToMonkeyWhenFalse { get; }
 
-    public Monkey(LinkedList<BigInteger> items, Func<BigInteger, BigInteger> operation, Predicate<BigInteger> test, int throwToMonkeyWhenTrue,
+    public Monkey(LinkedList<long> items, Func<long, long> operation, int test,
+        int throwToMonkeyWhenTrue,
         int throwToMonkeyWhenFalse)
     {
         _items = items;
         _operation = operation;
-        _test = test;
+        Test = test;
         ThrowToMonkeyWhenTrue = throwToMonkeyWhenTrue;
         ThrowToMonkeyWhenFalse = throwToMonkeyWhenFalse;
 
@@ -39,9 +41,9 @@ class Monkey
 
         _items.First.Value = val;
 
-        return _test(val);
+        return val % Test == 0;
     }
-    
+
     public bool InspectWhileWorried()
     {
         InspectionCount++;
@@ -52,7 +54,7 @@ class Monkey
 
         _items.First.Value = val;
 
-        return _test(val);
+        return val % Test == 0;
     }
 
     public bool HasItem()
@@ -60,8 +62,16 @@ class Monkey
         return _items.Count != 0;
     }
 
-    public BigInteger Throw()
+    public void ReduceStress()
     {
+        var num = _items.First.Value / LCD;
+        _items.First.Value -= num * LCD;
+    }
+    
+    public long Throw()
+    {
+        ReduceStress();
+
         var val = _items.First.Value;
 
         _items.RemoveFirst();
@@ -69,7 +79,7 @@ class Monkey
         return val;
     }
 
-    public void Catch(BigInteger item)
+    public void Catch(long item)
     {
         _items.AddLast(item);
     }
@@ -86,103 +96,107 @@ public sealed class Day11 : BaseDay
 
     private void InitialiseMonkeys()
     {
-        _monkeys = new List<Monkey>
-        {
-            new(
-                new LinkedList<BigInteger>(new BigInteger[] { 79, 98 }),
-                item => item * 19,
-                item => item % 23 == 0,
-                2,
-                3
-            ),
-            new(
-                new LinkedList<BigInteger>(new BigInteger[] { 54, 65, 75, 74 }),
-                item => item + 6,
-                item => item % 19 == 0,
-                2,
-                0
-            ),
-            new(
-                new LinkedList<BigInteger>(new BigInteger[] { 79, 60, 97 }),
-                item => item * item,
-                item => item % 13 == 0,
-                1,
-                3
-            ),
-            new(
-                new LinkedList<BigInteger>(new BigInteger[] { 74 }),
-                item => item + 3,
-                item => item % 17 == 0,
-                0,
-                1
-            )
-        };
-
         // _monkeys = new List<Monkey>
         // {
         //     new(
-        //         new LinkedList<BigInteger>(new BigInteger[] { 89, 73, 66, 57, 64, 80 }),
-        //         item => item * 3,
-        //         item => item % 13 == 0,
-        //         6,
-        //         2
+        //         new LinkedList<long>(new long[] { 79, 98 }),
+        //         item => item * 19,
+        //         23,
+        //         2,
+        //         3
         //     ),
         //     new(
-        //         new LinkedList<BigInteger>(new BigInteger[] { 83, 78, 81, 55, 81, 59, 69 }),
-        //         item => item + 1,
-        //         item => item % 3 == 0,
-        //         7,
-        //         4
+        //         new LinkedList<long>(new long[] { 54, 65, 75, 74 }),
+        //         item => item + 6,
+        //         19,
+        //         2,
+        //         0
         //     ),
         //     new(
-        //         new LinkedList<BigInteger>(new BigInteger[] { 76, 91, 58, 85 }),
-        //         item => item * 13,
-        //         item => item % 7 == 0,
-        //         1,
-        //         4
-        //     ),
-        //     new(
-        //         new LinkedList<BigInteger>(new BigInteger[] { 71, 72, 74, 76, 68 }),
+        //         new LinkedList<long>(new long[] { 79, 60, 97 }),
         //         item => item * item,
-        //         item => item % 2 == 0,
-        //         6,
-        //         0
-        //     ),
-        //     new(
-        //         new LinkedList<BigInteger>(new BigInteger[] { 98, 85, 84 }),
-        //         item => item + 7,
-        //         item => item % 19 == 0,
-        //         5,
-        //         7
-        //     ),
-        //     new(
-        //         new LinkedList<BigInteger>(new BigInteger[] { 78 }),
-        //         item => item + 8,
-        //         item => item % 5 == 0,
-        //         3,
-        //         0
-        //     ),
-        //     new(
-        //         new LinkedList<BigInteger>(new BigInteger[] { 86, 70, 60, 88, 88, 78, 74, 83 }),
-        //         item => item + 4,
-        //         item => item % 11 == 0,
+        //         13,
         //         1,
-        //         2
+        //         3
         //     ),
         //     new(
-        //         new LinkedList<BigInteger>(new BigInteger[] { 81, 58 }),
-        //         item => item + 5,
-        //         item => item % 17 == 0,
-        //         3,
-        //         5
+        //         new LinkedList<long>(new long[] { 74 }),
+        //         item => item + 3,
+        //         17,
+        //         0,
+        //         1
         //     )
         // };
+
+        _monkeys = new List<Monkey>
+        {
+            new(
+                new LinkedList<long>(new long[] { 89, 73, 66, 57, 64, 80 }),
+                item => item * 3,
+                13,
+                6,
+                2
+            ),
+            new(
+                new LinkedList<long>(new long[] { 83, 78, 81, 55, 81, 59, 69 }),
+                item => item + 1,
+                3,
+                7,
+                4
+            ),
+            new(
+                new LinkedList<long>(new long[] { 76, 91, 58, 85 }),
+                item => item * 13,
+                7,
+                1,
+                4
+            ),
+            new(
+                new LinkedList<long>(new long[] { 71, 72, 74, 76, 68 }),
+                item => item * item,
+                2,
+                6,
+                0
+            ),
+            new(
+                new LinkedList<long>(new long[] { 98, 85, 84 }),
+                item => item + 7,
+                19,
+                5,
+                7
+            ),
+            new(
+                new LinkedList<long>(new long[] { 78 }),
+                item => item + 8,
+                5,
+                3,
+                0
+            ),
+            new(
+                new LinkedList<long>(new long[] { 86, 70, 60, 88, 88, 78, 74, 83 }),
+                item => item + 4,
+                11,
+                1,
+                2
+            ),
+            new(
+                new LinkedList<long>(new long[] { 81, 58 }),
+                item => item + 5,
+                17,
+                3,
+                5
+            )
+        };
+
+        var lcd = _monkeys.Aggregate(1, (current, monkey) => current * monkey.Test);
+
+        Monkey.LCD = lcd;
     }
 
     public override ValueTask<string> Solve_1()
     {
         InitialiseMonkeys();
-        
+
         var roundsToDo = 20;
 
         for (var round = 0; round < roundsToDo; round++)
@@ -212,7 +226,7 @@ public sealed class Day11 : BaseDay
     public override ValueTask<string> Solve_2()
     {
         InitialiseMonkeys();
-        
+
         var roundsToDo = 10_000;
 
         for (var round = 0; round < roundsToDo; round++)
@@ -230,11 +244,6 @@ public sealed class Day11 : BaseDay
                         _monkeys[monkey.ThrowToMonkeyWhenFalse].Catch(monkey.Throw());
                     }
                 }
-            }
-
-            if (round % 100 == 0)
-            {
-                Console.WriteLine($"Did round {round}");
             }
         }
 
