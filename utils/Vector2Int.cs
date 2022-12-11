@@ -89,5 +89,25 @@ namespace AoC2022.utils
         {
             return $"({x}, {y})";
         }
+
+        public static Vector2Int Up()
+        {
+            return new Vector2Int(0, 1);
+        }
+
+        public static Vector2Int Down()
+        {
+            return new Vector2Int(0, -1);
+        }
+
+        public static Vector2Int Left()
+        {
+            return new Vector2Int(-1, 0);
+        }
+
+        public static Vector2Int Right()
+        {
+            return new Vector2Int(1, 0);
+        }
     }
 }
