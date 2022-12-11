@@ -1,158 +1,137 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 using AoC2022.utils;
 using AoCHelper;
 
-namespace AoC2022.Days
-{
-    internal class Tree
-    {
-        public int Height;
-        public bool Visible;
+namespace AoC2022.Days;
 
-        public Tree(int height)
+internal class Tree
+{
+    public int Height;
+    public bool Visible;
+
+    public Tree(int height)
+    {
+        Height = height;
+        Visible = true;
+    }
+}
+
+public sealed class Day08 : BaseDay
+{
+    private List<List<Tree>> _map;
+    private Vector2Int _bottomRight;
+
+    public Day08()
+    {
+        var input = File.ReadAllLines(InputFilePath);
+
+        _map = new List<List<Tree>>();
+
+        foreach (var line in input)
         {
-            Height = height;
-            Visible = true;
+            var mapLine = new List<Tree>();
+
+            foreach (var height in line)
+            {
+                mapLine.Add(new Tree(height - '0'));
+            }
+
+            _map.Add(mapLine);
         }
+
+        _bottomRight = new Vector2Int(_map[0].Count - 1, _map.Count - 1);
     }
 
-    public sealed class Day08 : BaseDay
+    public override ValueTask<string> Solve_1()
     {
-        private List<List<Tree>> _map;
-        private Vector2Int _bottomRight;
+        var visibleCount = 0;
 
-        public Day08()
+        for (var y = 0; y < _map.Count; y++)
         {
-            var input = File.ReadAllLines(InputFilePath);
-
-            _map = new List<List<Tree>>();
-
-            foreach (var line in input)
+            for (var x = 0; x < _map[y].Count; x++)
             {
-                var mapLine = new List<Tree>();
+                var height = _map[y][x].Height;
 
-                foreach (var height in line)
+                var visibleT = CanSeeBetween(new Vector2Int(x, y), new Vector2Int(x, 0), height);
+                var visibleR = CanSeeBetween(new Vector2Int(x, y), new Vector2Int(_bottomRight.x, y), height);
+                var visibleB = CanSeeBetween(new Vector2Int(x, y), new Vector2Int(x, _bottomRight.y), height);
+                var visibleL = CanSeeBetween(new Vector2Int(x, y), new Vector2Int(0, y), height);
+
+                _map[y][x].Visible = visibleT || visibleR || visibleB || visibleL;
+
+                if (_map[y][x].Visible)
                 {
-                    mapLine.Add(new Tree(height - '0'));
-                }
-
-                _map.Add(mapLine);
-            }
-
-            _bottomRight = new Vector2Int(_map[0].Count - 1, _map.Count - 1);
-        }
-
-        public override ValueTask<string> Solve_1()
-        {
-            var visibleCount = 0;
-
-            for (var y = 0; y < _map.Count; y++)
-            {
-                for (var x = 0; x < _map[y].Count; x++)
-                {
-                    var height = _map[y][x].Height;
-
-                    var visibleT = IsVisibleFromTop(x, y, height);
-                    var visibleR = IsVisibleFromRight(x, y, height);
-                    var visibleB = IsVisibleFromBottom(x, y, height);
-                    var visibleL = IsVisibleFromLeft(x, y, height);
-
-                    _map[y][x].Visible = visibleT || visibleR || visibleB || visibleL;
-
-                    if (_map[y][x].Visible)
-                    {
-                        visibleCount++;
-                    }
+                    visibleCount++;
                 }
             }
-
-            return new ValueTask<string>($"{visibleCount}");
         }
 
-        public override ValueTask<string> Solve_2()
+        return new ValueTask<string>($"{visibleCount}");
+    }
+
+    public override ValueTask<string> Solve_2()
+    {
+        var highestScenicScore = 0L;
+
+        for (var y = 0; y < _map.Count; y++)
         {
-            return new ValueTask<string>($"TODO");
-        }
-
-        private bool IsVisibleFromTop(int x, int y, int height)
-        {
-            var searchX = x;
-            var searchY = 0;
-
-
-            while (!(searchX == x && searchY == y))
+            for (var x = 0; x < _map[y].Count; x++)
             {
-                if (_map[searchY][searchX].Height >= height)
+                var height = _map[y][x].Height;
+
+                var viewDistanceT = ViewDistance(new Vector2Int(x, y), new Vector2Int(x, 0), height, true);
+                var viewDistanceR = ViewDistance(new Vector2Int(x, y), new Vector2Int(_bottomRight.x, y), height, true);
+                var viewDistanceB = ViewDistance(new Vector2Int(x, y), new Vector2Int(x, _bottomRight.y), height, true);
+                var viewDistanceL = ViewDistance(new Vector2Int(x, y), new Vector2Int(0, y), height, true);
+
+                var scenicScore = viewDistanceT * viewDistanceR * viewDistanceB * viewDistanceL;
+
+                if (scenicScore > highestScenicScore)
                 {
-                    return false;
+                    highestScenicScore = scenicScore;
                 }
-
-                searchY++;
             }
-
-            return true;
         }
 
-        private bool IsVisibleFromRight(int x, int y, int height)
+        return new ValueTask<string>($"{highestScenicScore}");
+    }
+
+    private int ViewDistance(Vector2Int from, Vector2Int to, int height, bool inclusive = false)
+    {
+        if (from == to)
+            return 0;
+
+        var curr = from;
+        var steps = 0;
+
+        var moveVec = new Vector2Int(
+            to.x - from.x,
+            to.y - from.y
+        ).Normalize();
+
+        while (curr != to)
         {
-            var searchX = _bottomRight.x;
-            var searchY = y;
+            curr += moveVec;
 
+            if (inclusive)
+                steps++;
 
-            while (!(searchX == x && searchY == y))
-            {
-                if (_map[searchY][searchX].Height >= height)
-                {
-                    return false;
-                }
+            if (_map[curr.y][curr.x].Height >= height)
+                break;
 
-                searchX--;
-            }
-
-            return true;
+            if (!inclusive)
+                steps++;
         }
 
-        private bool IsVisibleFromBottom(int x, int y, int height)
-        {
-            var searchX = x;
-            var searchY = _bottomRight.y;
+        return steps;
+    }
 
+    private bool CanSeeBetween(Vector2Int from, Vector2Int to, int height)
+    {
+        var steps = ViewDistance(from, to, height);
 
-            while (!(searchX == x && searchY == y))
-            {
-                if (_map[searchY][searchX].Height >= height)
-                {
-                    return false;
-                }
-
-                searchY--;
-            }
-
-            return true;
-        }
-
-        private bool IsVisibleFromLeft(int x, int y, int height)
-        {
-            var searchX = 0;
-            var searchY = y;
-
-
-            while (!(searchX == x && searchY == y))
-            {
-                if (_map[searchY][searchX].Height >= height)
-                {
-                    return false;
-                }
-
-                searchX++;
-            }
-
-            return true;
-        }
+        return steps == from.ManhattanDistance(to);
     }
 }

@@ -69,6 +69,16 @@ namespace AoC2022.utils
         {
             return (float)Math.Sqrt(x * x + y * y);
         }
+        
+        public int ManhattanDistance(Vector2Int other)
+        {
+            return Math.Abs(x - other.x) + Math.Abs(y - other.y);
+        }
+
+        public Vector2Int Normalize()
+        {
+            return this / ManhattanDistance(new Vector2Int(0, 0));
+        }
 
         public override int GetHashCode()
         {
